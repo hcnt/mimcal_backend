@@ -1,0 +1,84 @@
+from rest_framework import serializers
+
+from main.models import Schedule, EventType, Event, User
+from rest_framework.validators import UniqueValidator
+
+from main.models import Comment, CommentReply
+
+
+class EventTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventType
+        fields = '__all__'
+
+
+class EventSerializer(serializers.ModelSerializer):
+    is_checked = serializers.SerializerMethodField('_is_checked')
+
+    def _is_checked(self, obj):
+        print(self.context)
+        user_id = self.context.get("user_id", False)
+        if user_id:
+            return user_id in obj.users_marks.all()
+        return False
+
+    class Meta:
+        model = Event
+        exclude = ('users_marks',)
+
+
+class ScheduleSerializer(serializers.ModelSerializer):
+    # events = EventSerializer(source='event_set', many=True)
+
+    class Meta:
+        model = Schedule
+        fields = ('id', 'name', 'owner_id', 'default_permission_level')
+
+
+class ScheduleWithEventsSerializer(serializers.ModelSerializer):
+    events = serializers.ListField(read_only=True,
+                                   child=EventSerializer(), source='event_set.all')
+    owner_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    class Meta:
+        model = Schedule
+        fields = ('id', 'name', 'owner_id', 'events', 'default_permission_level')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(validators=[UniqueValidator(
+        queryset=User.objects.all(), message="Username is already taken"
+    )])
+    email = serializers.CharField(validators=[UniqueValidator(
+        queryset=User.objects.all(), message="This email already has an account"
+    )])
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'password',
+        )
+
+
+class CommentReplySerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = CommentReply
+        fields = ('content', 'likes_count', 'author_id', 'event', 'reply_to')
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(read_only=True)
+    replies = serializers.ListField(read_only=True, allow_empty=True,
+                                    child=CommentReplySerializer(), source='comment_set.all')
+
+    class Meta:
+        model = Comment
+        fields = ('content', 'replies', 'likes_count', 'author_id', 'event')
