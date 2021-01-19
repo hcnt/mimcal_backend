@@ -73,6 +73,7 @@ ROOT_URLCONF = 'mimcal.urls'
 
 
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 TEMPLATES = [
