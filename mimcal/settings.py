@@ -24,7 +24,7 @@ SECRET_KEY = '1afc8#u(_gfw3@no_w&jawr8ibqhasxh=(0#trt9y4w5$yu)4_'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -70,6 +70,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'mimcal.urls'
+
 
 CORS_ORIGIN_ALLOW_ALL = True
 
