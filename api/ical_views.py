@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django_ical.feedgenerator import ICal20Feed
 from django_ical.views import ICalFeed
 from main.models import Event, Schedule
@@ -32,4 +34,4 @@ class EventFeed(ICalFeed):
         return ''
 
     def item_guid(self, item):
-        return "mimcal:"+str(item.id) + "-" + str(self.item_timestamp(item))
+        return "mimcal:"+str(item.id) + "-" + str(datetime.now())
