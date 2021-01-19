@@ -1,10 +1,17 @@
 asgiref==3.3.1
+dj-database-url==0.5.0
 Django==3.1.4
+django-heroku==0.3.1
+django-ical==1.7.1
+django-recurrence==1.10.3
 django-rest-registration==0.5.6
 djangorestframework==3.12.2
+gunicorn==20.0.4
 icalendar==4.0.7
+psycopg2==2.8.6
 python-dateutil==2.8.1
 pytz==2020.4
 six==1.15.0
 sqlparse==0.4.1
 typing==3.7.4.3
+whitenoise==5.2.0
