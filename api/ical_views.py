@@ -34,4 +34,4 @@ class EventFeed(ICalFeed):
         return ''
 
     def item_guid(self, item):
-        return "mimcal:"+str(item.id) + "-" + str(datetime.now())
+        return "mimcal:" + str(item.id)
