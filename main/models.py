@@ -53,7 +53,7 @@ class Event(models.Model):
     desc = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH, blank=True)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
-    users_marks = models.ManyToManyField(User)
+    users_marks = models.ManyToManyField(User, blank=True)
     type = models.ForeignKey(EventType, on_delete=models.CASCADE)
     schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
 
@@ -69,8 +69,7 @@ class Comment(models.Model):
     likes_count = models.IntegerField()
     author = models.ForeignKey(User, related_name='comments', on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-
-    liked_users = models.ManyToManyField(User, related_name='liked_comments')
+    liked_users = models.ManyToManyField(User, related_name='liked_comments', blank=True)
 
     def __str__(self):
         return self.content
@@ -82,7 +81,7 @@ class CommentReply(models.Model):
     reply_to = models.ForeignKey(Comment, on_delete=models.CASCADE)
     author = models.ForeignKey(User, related_name='reply_comments', on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    liked_users = models.ManyToManyField(User, related_name='liked_reply_comments')
+    liked_users = models.ManyToManyField(User, related_name='liked_reply_comments', blank=True)
 
     def __str__(self):
         return self.content
