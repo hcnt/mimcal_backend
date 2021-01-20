@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+MAX_TEXT_FIELD_LENGTH = 4096
 
 # "If you’re starting a new project,
 # it’s highly recommended to set up a custom user model,
@@ -16,7 +17,7 @@ class User(AbstractUser):
 # Field = SQL column
 # Column with id is added automatically
 class Schedule(models.Model):
-    name = models.CharField(max_length=512)
+    name = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH)
     owner = models.ForeignKey(User, related_name='owned_schedules', on_delete=models.CASCADE)
     permitted_users = models.ManyToManyField(User, through='SchedulePermission')
     default_permission_level = models.IntegerField()
@@ -36,13 +37,13 @@ class SchedulePermission(models.Model):
 
 
 class EventType(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH)
 
 
 # ManyToManyField automatically creates new table
 class Event(models.Model):
-    title = models.CharField(max_length=512)
-    desc = models.CharField(max_length=4096, blank=True)
+    title = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH)
+    desc = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH, blank=True)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     users_marks = models.ManyToManyField(User)
@@ -54,7 +55,7 @@ class Event(models.Model):
 
 
 class Comment(models.Model):
-    content = models.TextField(max_length=1024)
+    content = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH)
     likes_count = models.IntegerField()
     author = models.ForeignKey(User, related_name='comments', on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
@@ -62,7 +63,7 @@ class Comment(models.Model):
 
 
 class CommentReply(models.Model):
-    content = models.TextField(max_length=1024)
+    content = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH)
     likes_count = models.IntegerField()
     reply_to = models.ForeignKey(Comment, on_delete=models.CASCADE)
     author = models.ForeignKey(User, related_name='reply_comments', on_delete=models.CASCADE)
