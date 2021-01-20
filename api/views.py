@@ -1,4 +1,3 @@
-from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q, Exists, OuterRef
 from rest_framework.decorators import action
@@ -10,7 +9,7 @@ from rest_framework import viewsets
 from rest_framework.viewsets import GenericViewSet
 
 from api.serializers import ScheduleSerializer, EventSerializer, ScheduleWithEventsSerializer
-from main.models import Schedule, Event, EventType, SchedulePermission, SchedulePermissionLevels
+from main.models import Schedule, Event, EventType, SchedulePermission, SchedulePermissionLevels, User
 from main.models import SchedulePermissionLevels as Level
 
 from api.serializers import CommentSerializer, CommentReplySerializer
@@ -29,14 +28,20 @@ def has_perm_to_schedule(user, level, schedule):
         return False
 
 
+def check_perm_to_schedule(user, level, schedule):
+    if not has_perm_to_schedule(user, level, schedule):
+        raise PermissionDenied({"message": "You don't have permission to access",
+                                "object_id": schedule.id})
+
+
 class ScheduleViewSet(viewsets.ModelViewSet):
     queryset = Schedule.objects.all()
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         if self.request.method in SAFE_METHODS:
             needed_level = SchedulePermissionLevels.READ_ACCESS
-        elif self.action in ['add_permitted_user', 'remove_permitted_user']:
+        elif self.action in ['change_user_perm']:
             needed_level = SchedulePermissionLevels.MANAGE_ACCESS
         else:
             needed_level = SchedulePermissionLevels.READ_WRITE_ACCESS
@@ -63,9 +68,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     def events(self, request, pk=None):
         schedule = self.get_object()
 
-        if not has_perm_to_schedule(self.request.user, 0, schedule):
-            raise PermissionDenied({"message": "You don't have permission to access",
-                                    "object_id": schedule.id})
+        check_perm_to_schedule(self.request.user, 0, schedule)
         events = Event.objects.filter(schedule=schedule)
         n = self.request.query_params.get('n', None)
         if n:
@@ -98,9 +101,9 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 
 
 class EventViewSet(mixins.CreateModelMixin,
-                   mixins.RetrieveModelMixin,
                    mixins.UpdateModelMixin,
                    mixins.DestroyModelMixin,
+                   mixins.RetrieveModelMixin,
                    GenericViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
@@ -111,21 +114,42 @@ class EventViewSet(mixins.CreateModelMixin,
         context.update({"user_id": self.request.user})
         return context
 
+    def perform_create(self, serializer):
+        schedule = serializer.validated_data['schedule']
+        check_perm_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, schedule)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        schedule = serializer.validated_data['schedule']
+        check_perm_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, schedule)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        check_perm_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, instance.schedule)
+        instance.delete()
+
     @action(detail=True, methods=['post'])
     def check(self, request, pk=None):
         event = self.get_object()
+        if request.user.is_anonymous:
+            raise PermissionDenied(detail='You have to be logged in to check events')
+        check_perm_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         event.users_marks.add(request.user)
         return Response({'status': 'event checked'})
 
     @action(detail=True, methods=['post'])
     def uncheck(self, request, pk=None):
         event = self.get_object()
+        if request.user.is_anonymous:
+            raise PermissionDenied(detail='You have to be logged in to uncheck events')
+        check_perm_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         event.users_marks.remove(request.user)
         return Response({'status': 'event unchecked'})
 
     @action(detail=True, methods=['get'])
     def comments(self, request, pk=None):
         event = self.get_object()
+        check_perm_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         comments = Comment.objects.filter(event=event)
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
@@ -134,41 +158,41 @@ class EventViewSet(mixins.CreateModelMixin,
 class CommentViewSet(mixins.CreateModelMixin,
                      mixins.UpdateModelMixin,
                      mixins.DestroyModelMixin,
-                     mixins.RetrieveModelMixin,
                      GenericViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
-        obj = serializer.save(author=self.request.user)
+        obj = serializer.save(author=self.request.user, likes_count=0)
 
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
         comment = self.get_object()
         comment.liked_users.add(request.user)
         comment.likes_count += 1
+        comment.save()
         return Response({'status': 'comment liked'})
 
     @action(detail=True, methods=['post'])
-    def unlike_reply(self, request, pk=None):
+    def unlike(self, request, pk=None):
         comment = self.get_object()
         comment.liked_users.remove(request.user)
         comment.likes_count -= 1
+        comment.save()
         return Response({'status': 'comment unliked'})
 
 
 class CommentReplyViewSet(mixins.CreateModelMixin,
                           mixins.UpdateModelMixin,
                           mixins.DestroyModelMixin,
-                          mixins.RetrieveModelMixin,
                           GenericViewSet):
     queryset = CommentReply.objects.all()
     serializer_class = CommentReplySerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
-        obj = serializer.save(author=self.request.user)
+        obj = serializer.save(author=self.request.user, likes_count=0)
 
     @action(detail=True, methods=['post'])
     def like(self, request, pk=None):
@@ -178,7 +202,7 @@ class CommentReplyViewSet(mixins.CreateModelMixin,
         return Response({'status': 'reply liked'})
 
     @action(detail=True, methods=['post'])
-    def unlike_reply(self, request, pk=None):
+    def unlike(self, request, pk=None):
         comment = self.get_object()
         comment.liked_users.remove(request.user)
         comment.likes_count -= 1

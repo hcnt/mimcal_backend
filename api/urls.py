@@ -13,7 +13,7 @@ router.register('commentReplies', views.CommentReplyViewSet)
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
-    path('schedules/<int:schedule_id>/to_webcal', EventFeed()),
+    path('schedules/<int:schedule_id>/to_webcal/', EventFeed()),
     path('', include(router.urls)),
     path('auth/', include('rest_registration.api.urls')),
 ]

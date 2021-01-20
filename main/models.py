@@ -42,7 +42,7 @@ class EventType(models.Model):
 # ManyToManyField automatically creates new table
 class Event(models.Model):
     title = models.CharField(max_length=512)
-    desc = models.CharField(max_length=4096)
+    desc = models.CharField(max_length=4096, blank=True)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     users_marks = models.ManyToManyField(User)
