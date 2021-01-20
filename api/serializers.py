@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from main.models import Schedule, EventType, Event, User
-from rest_framework.validators import UniqueValidator
+from main.models import Schedule, EventType, Event, User, SchedulePermission
 
 from main.models import Comment, CommentReply
 
@@ -16,9 +15,8 @@ class EventSerializer(serializers.ModelSerializer):
     is_checked = serializers.SerializerMethodField('_is_checked')
 
     def _is_checked(self, obj):
-        print(self.context)
         user_id = self.context.get("user_id", False)
-        if user_id:
+        if user_id and not isinstance(obj, dict):
             return user_id in obj.users_marks.all()
         return False
 
@@ -28,8 +26,6 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
-    # events = EventSerializer(source='event_set', many=True)
-
     class Meta:
         model = Schedule
         fields = ('id', 'name', 'owner_id', 'default_permission_level')
@@ -43,27 +39,6 @@ class ScheduleWithEventsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Schedule
         fields = ('id', 'name', 'owner_id', 'events', 'default_permission_level')
-
-
-class UserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(validators=[UniqueValidator(
-        queryset=User.objects.all(), message="Username is already taken"
-    )])
-    email = serializers.CharField(validators=[UniqueValidator(
-        queryset=User.objects.all(), message="This email already has an account"
-    )])
-
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
-
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'password',
-        )
 
 
 class CommentReplySerializer(serializers.ModelSerializer):
@@ -82,3 +57,9 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('content', 'replies', 'likes_count', 'author_id', 'event')
+
+
+class SchedulePermissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SchedulePermission
+        fields = ('level', 'schedule')

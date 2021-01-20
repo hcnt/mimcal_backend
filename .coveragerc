@@ -1,0 +1,9 @@
+[coverage:run]
+source = .
+omit =
+	manage.py
+	*/migrations/*
+	venv/**
+	mimcal/asgi.py
+	mimcal/wsgi.py
+	*/__init__.py
