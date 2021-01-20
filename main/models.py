@@ -3,6 +3,7 @@ from django.db import models
 
 MAX_TEXT_FIELD_LENGTH = 4096
 
+
 # "If you’re starting a new project,
 # it’s highly recommended to set up a custom user model,
 # even if the default User model is sufficient for you.
@@ -22,6 +23,9 @@ class Schedule(models.Model):
     permitted_users = models.ManyToManyField(User, through='SchedulePermission')
     default_permission_level = models.IntegerField()
 
+    def __str__(self):
+        return self.name
+
 
 class SchedulePermissionLevels(models.IntegerChoices):
     RESTRICTED_ACCESS = 0, 'Restricted access'
@@ -39,6 +43,9 @@ class SchedulePermission(models.Model):
 class EventType(models.Model):
     name = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH)
 
+    def __str__(self):
+        return self.name
+
 
 # ManyToManyField automatically creates new table
 class Event(models.Model):
@@ -50,6 +57,9 @@ class Event(models.Model):
     type = models.ForeignKey(EventType, on_delete=models.CASCADE)
     schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.title
+
     class Meta:
         ordering = ['-start_date']
 
@@ -59,7 +69,11 @@ class Comment(models.Model):
     likes_count = models.IntegerField()
     author = models.ForeignKey(User, related_name='comments', on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
+
     liked_users = models.ManyToManyField(User, related_name='liked_comments')
+
+    def __str__(self):
+        return self.content
 
 
 class CommentReply(models.Model):
@@ -69,3 +83,6 @@ class CommentReply(models.Model):
     author = models.ForeignKey(User, related_name='reply_comments', on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     liked_users = models.ManyToManyField(User, related_name='liked_reply_comments')
+
+    def __str__(self):
+        return self.content
