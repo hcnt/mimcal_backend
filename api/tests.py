@@ -138,12 +138,29 @@ class ScenarioTests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+        url = '/api/v1/commentReplies/'
+        data = {'content': 'czesc', 'event': '1', 'author_id': '1', 'reply_to': '1'}
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # check for access to comments
+        url = '/api/v1/events/1/comments/'
+        response = self.client.get(url)
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         comment = Comment.objects.get()
         self.assertEqual(comment.likes_count, 0)
 
         url = '/api/v1/comments/1/like/'
         response = self.client.post(url, {}, format='json')
         self.assertEqual(response.status_code, 200)
+
+        # check for access to comments
+        url = '/api/v1/events/1/comments/'
+        response = self.client.get(url)
+        print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         comment = Comment.objects.get()
         self.assertEqual(comment.likes_count, 1)

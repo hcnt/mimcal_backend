@@ -158,7 +158,7 @@ class EventViewSet(mixins.CreateModelMixin,
         event = self.get_object()
         check_perm_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         comments = Comment.objects.filter(event=event)
-        serializer = CommentSerializer(comments, many=True)
+        serializer = CommentSerializer(comments, many=True, context={'user_id': request.user})
         return Response(serializer.data)
 
 
@@ -196,7 +196,7 @@ class CommentReplyViewSet(mixins.CreateModelMixin,
                           GenericViewSet):
     queryset = CommentReply.objects.all()
     serializer_class = CommentReplySerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]
 
     def perform_create(self, serializer):
         obj = serializer.save(author=self.request.user, likes_count=0)

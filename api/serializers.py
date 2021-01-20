@@ -16,7 +16,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     def _is_checked(self, obj):
         user_id = self.context.get("user_id", False)
-        if user_id and not isinstance(obj, dict):
+        if user_id:
             return user_id in obj.users_marks.all()
         return False
 
@@ -43,20 +43,44 @@ class ScheduleWithEventsSerializer(serializers.ModelSerializer):
 
 class CommentReplySerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(read_only=True)
+    is_liked_by_me = serializers.SerializerMethodField('_is_liked_by_me')
+    author = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field='username'
+    )
+
+    def _is_liked_by_me(self, obj):
+        user_id = self.context.get("user_id", False)
+        if user_id:
+            return user_id in obj.liked_users.all()
+        return False
 
     class Meta:
         model = CommentReply
-        fields = ('content', 'likes_count', 'author_id', 'event', 'reply_to')
+        fields = ('content', 'likes_count', 'author_id', 'event', 'is_liked_by_me', 'author', 'reply_to')
 
 
 class CommentSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(read_only=True)
     replies = serializers.ListField(read_only=True, allow_empty=True,
-                                    child=CommentReplySerializer(), source='comment_set.all')
+                                    child=CommentReplySerializer(), source='commentreply_set.all')
+    is_liked_by_me = serializers.SerializerMethodField('_is_liked_by_me')
+    author = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field='username',
+    )
+
+    def _is_liked_by_me(self, obj):
+        user_id = self.context.get("user_id", False)
+        if user_id:
+            return user_id in obj.liked_users.all()
+        return False
 
     class Meta:
         model = Comment
-        fields = ('content', 'replies', 'likes_count', 'author_id', 'event')
+        fields = ('content', 'replies', 'likes_count', 'author_id', 'event', 'is_liked_by_me', 'author')
 
 
 class SchedulePermissionSerializer(serializers.ModelSerializer):
