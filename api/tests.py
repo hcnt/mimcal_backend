@@ -1,9 +1,6 @@
-from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase
 from main.models import User, Schedule, EventType, Event, Comment
-from rest_framework.test import force_authenticate
-from rest_framework.authtoken.models import Token
 
 
 def create_test_account(client, username='test'):
@@ -19,8 +16,6 @@ def login_test_account(client, username='test'):
     response = client.post(url, data, format='json')
     client.credentials(HTTP_AUTHORIZATION='Token ' + response.data['token'])
     return response
-
-
 
 
 class UserTests(APITestCase):
@@ -41,11 +36,11 @@ class ScenarioTests(APITestCase):
         self.event_type_test = EventType.objects.create(name='egzamin')
 
         self.test_event_data = {'title': 'jakiś-egzamin',
-                       'desc': '',
-                       'start_date': '2021-02-02T10:00',
-                       'end_date': '2021-02-02T12:00',
-                       'type': self.event_type_test.id,
-                       'schedule': '1'}
+                                'desc': '',
+                                'start_date': '2021-02-02T10:00',
+                                'end_date': '2021-02-02T12:00',
+                                'type': self.event_type_test.id,
+                                'schedule': '1'}
 
     def test_create_schedule(self):
         create_test_account(self.client)
@@ -68,7 +63,7 @@ class ScenarioTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200 if has_access else 404)
 
-    def create_schedule_and_event(self,default_level=1):
+    def create_schedule_and_event(self, default_level=1):
         url = '/api/v1/schedules/'
         data = {'name': 'mimuw', 'default_permission_level': default_level}
 
@@ -82,7 +77,6 @@ class ScenarioTests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         return Schedule.objects.get(name='mimuw'), Event.objects.get(title='jakiś-egzamin')
-
 
     def test_1(self):
         # Normal case with one logged in user
@@ -188,11 +182,9 @@ class ScenarioTests(APITestCase):
         create_test_account(self.client, username='test')
         create_test_account(self.client, username='test2')
 
-
         login_test_account(self.client, username='test')
 
         schedule, event = self.create_schedule_and_event(0)
-
 
         login_test_account(self.client, username='test2')
 
@@ -202,7 +194,6 @@ class ScenarioTests(APITestCase):
         schedule.save()
 
         self.assertScheduleReadAccess(True)
-
 
     def test_perm_2(self):
         create_test_account(self.client, username='test')

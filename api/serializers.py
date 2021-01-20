@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from main.models import Schedule, EventType, Event, User
-from rest_framework.validators import UniqueValidator
+from main.models import Schedule, EventType, Event, User, SchedulePermission
 
 from main.models import Comment, CommentReply
 
@@ -27,8 +26,6 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
-    # events = EventSerializer(source='event_set', many=True)
-
     class Meta:
         model = Schedule
         fields = ('id', 'name', 'owner_id', 'default_permission_level')
@@ -60,3 +57,9 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('content', 'replies', 'likes_count', 'author_id', 'event')
+
+
+class SchedulePermissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SchedulePermission
+        fields = ('level', 'schedule')

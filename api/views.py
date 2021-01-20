@@ -8,13 +8,13 @@ from rest_framework import permissions, mixins
 from rest_framework import viewsets
 from rest_framework.viewsets import GenericViewSet
 
-from api.serializers import ScheduleSerializer, EventSerializer, ScheduleWithEventsSerializer
-from main.models import Schedule, Event, EventType, SchedulePermission, SchedulePermissionLevels, User
+from api.serializers import ScheduleSerializer, EventSerializer, ScheduleWithEventsSerializer, \
+    SchedulePermissionSerializer
+from main.models import Schedule, Event, User, SchedulePermission, SchedulePermissionLevels
 from main.models import SchedulePermissionLevels as Level
 
 from api.serializers import CommentSerializer, CommentReplySerializer
 from main.models import Comment, CommentReply
-from rest_registration.signals import user_changed_email
 
 
 def has_perm_to_schedule(user, level, schedule):
@@ -75,6 +75,13 @@ class ScheduleViewSet(viewsets.ModelViewSet):
             events = events[:int(n)]
 
         serializer = EventSerializer(events, many=True, context={'user_id': request.user})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def permitted_users(self, request, pk=None):
+        schedule = self.get_object()
+        perms = SchedulePermission.objects.filter(schedule=schedule)
+        serializer = SchedulePermissionSerializer(perms, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['POST'])
