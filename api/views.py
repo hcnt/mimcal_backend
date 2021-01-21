@@ -15,28 +15,17 @@ from main.models import SchedulePermissionLevels as Level
 
 from api.serializers import CommentSerializer, CommentReplySerializer
 from main.models import Comment, CommentReply
-
-
-def has_perm_to_schedule(user, level, schedule):
-    if schedule.default_permission_level >= level:
-        return True
-    if user.is_anonymous:
-        return False
-    try:
-        return SchedulePermission.objects.get(user=user, schedule=schedule).level >= level
-    except ObjectDoesNotExist:
-        return False
-
-
-def check_perm_to_schedule(user, level, schedule):
-    if not has_perm_to_schedule(user, level, schedule):
-        raise PermissionDenied({"message": "You don't have permission to access",
-                                "object_id": schedule.id})
+from api.utils import check_permission_to_schedule
 
 
 class ScheduleViewSet(viewsets.ModelViewSet):
     queryset = Schedule.objects.all()
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_serializer_context(self):
+        context = super(ScheduleViewSet, self).get_serializer_context()
+        context.update({"user": self.request.user})
+        return context
 
     def get_queryset(self):
         if self.request.method in SAFE_METHODS:
@@ -68,7 +57,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     def events(self, request, pk=None):
         schedule = self.get_object()
 
-        check_perm_to_schedule(self.request.user, 0, schedule)
+        check_permission_to_schedule(self.request.user, 0, schedule)
         events = Event.objects.filter(schedule=schedule)
         n = self.request.query_params.get('n', None)
         if n:
@@ -85,7 +74,25 @@ class ScheduleViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['POST'])
-    def change_user_perm(self, request, pk=None):
+    def remove_permission(self, request, pk=None):
+        schedule = self.get_object()
+        username = self.request.query_params.get('username', None)
+        if not username:
+            raise ValidationError
+        try:
+            user = User.objects.get(username=username)
+        except ObjectDoesNotExist:
+            raise ValidationError
+        try:
+            perm = SchedulePermission.objects.get(user=user, schedule=schedule)
+            perm.delete()
+        except ObjectDoesNotExist:
+            raise ValidationError
+        return Response({'status': 'removed permission'})
+
+    # If permission doesn't exits, this adds permission with given level
+    @action(detail=True, methods=['POST'])
+    def change_user_permission(self, request, pk=None):
         schedule = self.get_object()
         try:
             level = int(self.request.query_params.get('level', None))
@@ -123,16 +130,16 @@ class EventViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         schedule = serializer.validated_data['schedule']
-        check_perm_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, schedule)
+        check_permission_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, schedule)
         serializer.save()
 
     def perform_update(self, serializer):
         schedule = serializer.validated_data['schedule']
-        check_perm_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, schedule)
+        check_permission_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, schedule)
         serializer.save()
 
     def perform_destroy(self, instance):
-        check_perm_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, instance.schedule)
+        check_permission_to_schedule(self.request.user, Level.READ_WRITE_ACCESS, instance.schedule)
         instance.delete()
 
     @action(detail=True, methods=['post'])
@@ -140,7 +147,7 @@ class EventViewSet(mixins.CreateModelMixin,
         event = self.get_object()
         if request.user.is_anonymous:
             raise PermissionDenied(detail='You have to be logged in to check events')
-        check_perm_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
+        check_permission_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         event.users_marks.add(request.user)
         return Response({'status': 'event checked'})
 
@@ -149,14 +156,14 @@ class EventViewSet(mixins.CreateModelMixin,
         event = self.get_object()
         if request.user.is_anonymous:
             raise PermissionDenied(detail='You have to be logged in to uncheck events')
-        check_perm_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
+        check_permission_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         event.users_marks.remove(request.user)
         return Response({'status': 'event unchecked'})
 
     @action(detail=True, methods=['get'])
     def comments(self, request, pk=None):
         event = self.get_object()
-        check_perm_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
+        check_permission_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         comments = Comment.objects.filter(event=event)
         serializer = CommentSerializer(comments, many=True, context={'user_id': request.user})
         return Response(serializer.data)

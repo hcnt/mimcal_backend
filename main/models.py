@@ -66,7 +66,7 @@ class Event(models.Model):
 
 class Comment(models.Model):
     content = models.TextField(max_length=MAX_TEXT_FIELD_LENGTH)
-    likes_count = models.IntegerField()
+    likes_count = models.IntegerField(default=0)
     author = models.ForeignKey(User, related_name='comments', on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     liked_users = models.ManyToManyField(User, related_name='liked_comments', blank=True)

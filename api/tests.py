@@ -42,21 +42,10 @@ class ScenarioTests(APITestCase):
                                 'type': self.event_type_test.id,
                                 'schedule': '1'}
 
-    def test_create_schedule(self):
-        create_test_account(self.client)
-        login_test_account(self.client)
-        url = '/api/v1/schedules/'
-
-        data = {'name': 'test_schedule', 'default_permission_level': '1'}
-
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Schedule.objects.count(), 1)
-        self.assertEqual(Schedule.objects.get().name, 'test_schedule')
-
     def assertScheduleReadAccess(self, has_access):
         url = '/api/v1/schedules/1/'
         response = self.client.get(url)
+        print(response.data)
         self.assertEqual(response.status_code, 200 if has_access else 404)
 
         url = '/api/v1/schedules/1/events/'
@@ -77,6 +66,18 @@ class ScenarioTests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         return Schedule.objects.get(name='mimuw'), Event.objects.get(title='jakiś-egzamin')
+
+    def test_create_schedule(self):
+        create_test_account(self.client)
+        login_test_account(self.client)
+        url = '/api/v1/schedules/'
+
+        data = {'name': 'test_schedule', 'default_permission_level': '1'}
+
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Schedule.objects.count(), 1)
+        self.assertEqual(Schedule.objects.get().name, 'test_schedule')
 
     def test_1(self):
         # Normal case with one logged in user
@@ -231,7 +232,7 @@ class ScenarioTests(APITestCase):
 
         # add permission to test2
         login_test_account(self.client, username='test')
-        url = '/api/v1/schedules/1/change_user_perm/'
+        url = '/api/v1/schedules/1/change_user_permission/'
         response = self.client.post(url, **{'QUERY_STRING': 'username=test2&level=1'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -239,17 +240,19 @@ class ScenarioTests(APITestCase):
         login_test_account(self.client, username='test2')
         self.assertScheduleReadAccess(True)
 
-    def test_webcal(self):
+    def test_webcal_deny(self):
         create_test_account(self.client)
-        schedule = Schedule.objects.create(name='mimuw', default_permission_level=0,
-                                           owner=User.objects.get(username='test'))
-        data = {'title': 'jakiś egzamin',
-                'desc': '',
-                'start_date': '2021-02-02T10:00',
-                'end_date': '2021-02-02T12:00',
-                'type': EventType.objects.get(id=1),
-                'schedule': schedule}
-        Event.objects.create(**data)
+        login_test_account(self.client)
+        self.create_schedule_and_event(0)
+
+        url = '/api/v1/schedules/1/to_webcal/'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_webcal_accept(self):
+        create_test_account(self.client)
+        login_test_account(self.client)
+        self.create_schedule_and_event(1)
 
         url = '/api/v1/schedules/1/to_webcal/'
         response = self.client.get(url)
