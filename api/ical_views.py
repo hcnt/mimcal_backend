@@ -13,7 +13,7 @@ class EventFeed(ICalFeed):
     title = "Kalendarz"
 
     def file_name(self, obj):
-        return "mimcal-%s-%s.ics" % (obj.id, datetime.now())
+        return "mimcal-%s.ics" % (obj.id)
 
     def get_object(self, request, schedule_id):
         return Schedule.objects.get(id=schedule_id)
