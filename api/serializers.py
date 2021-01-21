@@ -58,7 +58,7 @@ class CommentReplySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CommentReply
-        fields = ('content', 'likes_count', 'author_id', 'event', 'is_liked_by_me', 'author', 'reply_to')
+        fields = ('id', 'content', 'likes_count', 'author_id', 'event', 'is_liked_by_me', 'author', 'reply_to')
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -80,7 +80,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('content', 'replies', 'likes_count', 'author_id', 'event', 'is_liked_by_me', 'author')
+        fields = ('id','content','replies', 'likes_count', 'author_id', 'event', 'is_liked_by_me', 'author')
 
 
 class SchedulePermissionSerializer(serializers.ModelSerializer):
