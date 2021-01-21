@@ -61,7 +61,7 @@ class Event(models.Model):
         return self.title
 
     class Meta:
-        ordering = ['-start_date']
+        ordering = ['start_date']
 
 
 class Comment(models.Model):
