@@ -9,11 +9,12 @@ class EventFeed(ICalFeed):
     feed_type = ICal20Feed
     product_id = '-//Mimuw//Mimcal 21.3777//EN'
     timezone = 'Europe/Warsaw'
-    file_name = "mimcal.ics"
-    title = "Kalendarz"
 
     def file_name(self, obj):
         return "mimcal-%s.ics" % (obj.id)
+
+    def title(self, obj):
+        return obj.name
 
     def get_object(self, request, schedule_id):
         return Schedule.objects.get(id=schedule_id)
