@@ -206,6 +206,7 @@ class CommentReplyViewSet(mixins.CreateModelMixin,
         comment = self.get_object()
         comment.liked_users.add(request.user)
         comment.likes_count += 1
+        comment.save()
         return Response({'status': 'reply liked'})
 
     @action(detail=True, methods=['post'])
@@ -213,4 +214,5 @@ class CommentReplyViewSet(mixins.CreateModelMixin,
         comment = self.get_object()
         comment.liked_users.remove(request.user)
         comment.likes_count -= 1
+        comment.save()
         return Response({'status': 'reply unliked'})
