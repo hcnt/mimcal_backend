@@ -1,8 +1,10 @@
-from datetime import datetime
-
+from django.core.exceptions import ObjectDoesNotExist
 from django_ical.feedgenerator import ICal20Feed
 from django_ical.views import ICalFeed
 from main.models import Event, Schedule
+from api.utils import has_permission_to_schedule
+
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 
 class EventFeed(ICalFeed):
@@ -17,7 +19,10 @@ class EventFeed(ICalFeed):
         return obj.name
 
     def get_object(self, request, schedule_id):
-        return Schedule.objects.get(id=schedule_id)
+        schedule = Schedule.objects.get(id=schedule_id)
+        if not has_permission_to_schedule(request.user, 1, schedule):
+            raise ObjectDoesNotExist
+        return schedule
 
     def items(self, schedule: Schedule):
         return Event.objects.filter(schedule=schedule).order_by('-start_date')
