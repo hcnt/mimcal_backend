@@ -134,12 +134,12 @@ class ScenarioTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         url = '/api/v1/comments/'
-        data = {'content': 'czesc', 'event': '1', 'author_id': '1'}
+        data = {'content': 'czesc', 'event': '1'}
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         url = '/api/v1/commentReplies/'
-        data = {'content': 'czesc', 'event': '1', 'author_id': '1', 'reply_to': '1'}
+        data = {'content': 'czesc', 'event': '1', 'reply_to': '1'}
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
