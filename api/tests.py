@@ -156,6 +156,10 @@ class ScenarioTests(APITestCase):
         response = self.client.post(url, {}, format='json')
         self.assertEqual(response.status_code, 200)
 
+        url = '/api/v1/commentReplies/1/like/'
+        response = self.client.post(url, {}, format='json')
+        self.assertEqual(response.status_code, 200)
+
         # check for access to comments
         url = '/api/v1/events/1/comments/'
         response = self.client.get(url)
