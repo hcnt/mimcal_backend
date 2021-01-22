@@ -38,11 +38,14 @@ class ScheduleViewSet(viewsets.ModelViewSet):
             return Schedule.objects.filter(default_permission_level__gte=needed_level)
         return Schedule.objects.filter(
             Q(default_permission_level__gte=needed_level) |
-            Q(Exists(SchedulePermission.objects
-                     .filter(schedule=OuterRef('id'),
-                             user=self.request.user,
-                             level__gte=needed_level))
-              ))
+            (Q(Exists(SchedulePermission.objects
+                      .filter(schedule=OuterRef('id'),
+                              user=self.request.user,
+                              level__gte=needed_level))) &
+             ~Q(Exists(SchedulePermission.objects
+                       .filter(schedule=OuterRef('id'),
+                               user=self.request.user,
+                               level=Level.RESTRICTED_ACCESS)))))
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'create':
