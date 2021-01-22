@@ -51,7 +51,8 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         obj = serializer.save(owner=self.request.user)
-        obj.permitted_users.add(self.request.user, through_defaults={'level': Level.MANAGE_ACCESS})
+        perm = SchedulePermission.objects.create(user=self.request.user, level=Level.MANAGE_ACCESS, schedule=obj)
+        perm.save()
 
     @action(detail=True, methods=['GET'])
     def events(self, request, pk=None):
