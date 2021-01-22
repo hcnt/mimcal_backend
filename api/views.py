@@ -95,25 +95,19 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['POST'])
     def change_user_permission(self, request, pk=None):
         schedule = self.get_object()
-        print(self.request.query_params)
-        print("schedule:")
-        print(schedule)
-        print("try parse level")
         try:
             level = int(self.request.query_params.get('level', None))
-            print(level)
         except Exception:
-            print("error bo level zly")
-            raise ValidationError
+            raise ValidationError(detail='invalid level')
         username = self.request.query_params.get('username', None)
-        if level is None or username is None:
-            print("error bo username zly")
-            raise ValidationError
+        if level is None:
+            raise ValidationError(detail='invalid level')
+        if username is None:
+            raise ValidationError(detail='invalid username')
         try:
             user = User.objects.get(username=username)
         except ObjectDoesNotExist:
-            print("nie ma takiego uzytkownia")
-            raise ValidationError
+            raise ValidationError(detail='user does not exist')
         try:
             perm = SchedulePermission.objects.get(user=user, schedule=schedule)
             perm.level = level
@@ -159,6 +153,7 @@ class EventViewSet(mixins.CreateModelMixin,
             raise PermissionDenied(detail='You have to be logged in to check events')
         check_permission_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         event.users_marks.add(request.user)
+        event.save()
         return Response({'status': 'event checked'})
 
     @action(detail=True, methods=['post'])
@@ -168,6 +163,7 @@ class EventViewSet(mixins.CreateModelMixin,
             raise PermissionDenied(detail='You have to be logged in to uncheck events')
         check_permission_to_schedule(request.user, Level.READ_ACCESS, event.schedule)
         event.users_marks.remove(request.user)
+        event.save()
         return Response({'status': 'event unchecked'})
 
     @action(detail=True, methods=['get'])
