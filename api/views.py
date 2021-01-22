@@ -9,7 +9,7 @@ from rest_framework import viewsets
 from rest_framework.viewsets import GenericViewSet
 
 from api.serializers import ScheduleSerializer, EventSerializer, ScheduleWithEventsSerializer, \
-    SchedulePermissionSerializer
+    SchedulePermissionSerializer, SchedulePermissionSerializerForList
 from main.models import Schedule, Event, User, SchedulePermission, SchedulePermissionLevels
 from main.models import SchedulePermissionLevels as Level
 
