@@ -94,16 +94,24 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['POST'])
     def change_user_permission(self, request, pk=None):
         schedule = self.get_object()
+        print(self.request.query_params)
+        print("schedule:")
+        print(schedule)
+        print("try parse level")
         try:
             level = int(self.request.query_params.get('level', None))
+            print(level)
         except Exception:
+            print("error bo level zly")
             raise ValidationError
         username = self.request.query_params.get('username', None)
-        if not level or not username:
+        if level is None or username is None:
+            print("error bo username zly")
             raise ValidationError
         try:
             user = User.objects.get(username=username)
         except ObjectDoesNotExist:
+            print("nie ma takiego uzytkownia")
             raise ValidationError
         try:
             perm = SchedulePermission.objects.get(user=user, schedule=schedule)
