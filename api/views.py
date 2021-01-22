@@ -30,7 +30,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.method in SAFE_METHODS:
             needed_level = SchedulePermissionLevels.READ_ACCESS
-        elif self.action in ['change_user_perm']:
+        elif self.action in ['change_user_permission']:
             needed_level = SchedulePermissionLevels.MANAGE_ACCESS
         else:
             needed_level = SchedulePermissionLevels.READ_WRITE_ACCESS
@@ -110,9 +110,8 @@ class ScheduleViewSet(viewsets.ModelViewSet):
             perm.level = level
             perm.save()
         except ObjectDoesNotExist:
-            SchedulePermission.objects.create(user=user, schedule=schedule, level=level)
-            schedule.permitted_users.add(user)
-            schedule.save()
+            obj = SchedulePermission.objects.create(user=user, schedule=schedule, level=level)
+            obj.save()
         return Response({'status': 'changed permission level'})
 
 
