@@ -85,6 +85,12 @@ class CommentSerializer(BaseCommentSerializer):
 
 
 class SchedulePermissionSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field='username',
+    )
+
     class Meta:
         model = SchedulePermission
-        fields = ('level', 'schedule')
+        fields = ('level', 'schedule', 'user')
