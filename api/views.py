@@ -108,9 +108,11 @@ class ScheduleViewSet(viewsets.ModelViewSet):
         try:
             perm = SchedulePermission.objects.get(user=user, schedule=schedule)
             perm.level = level
+            perm.save()
         except ObjectDoesNotExist:
             SchedulePermission.objects.create(user=user, schedule=schedule, level=level)
             schedule.permitted_users.add(user)
+            schedule.save()
         return Response({'status': 'changed permission level'})
 
 
