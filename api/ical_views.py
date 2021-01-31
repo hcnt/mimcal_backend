@@ -20,8 +20,8 @@ class EventFeed(ICalFeed):
 
     def get_object(self, request, schedule_id):
         schedule = Schedule.objects.get(id=schedule_id)
-        if not has_permission_to_schedule(request.user, 1, schedule):
-            raise ObjectDoesNotExist
+        # if not has_permission_to_schedule(request.user, 1, schedule):
+        #     raise ObjectDoesNotExist
         return schedule
 
     def items(self, schedule: Schedule):
